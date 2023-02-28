@@ -14,14 +14,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.senai.sp.jandira.bmicalculator.calculate.calculate
+import br.senai.sp.jandira.bmicalculator.calculate.getBmiClasification
 import br.senai.sp.jandira.bmicalculator.model.Client
 import br.senai.sp.jandira.bmicalculator.model.Product
 import br.senai.sp.jandira.bmicalculator.ui.theme.BMICalculatorTheme
@@ -60,15 +60,19 @@ class MainActivity : ComponentActivity() {
 fun CalculatorScreen() {
 
 
-    var weightState = rememberSaveable {
+    var weightState by rememberSaveable() {
         mutableStateOf("")
     }
-    var heightState = rememberSaveable {
+    var heightState by rememberSaveable {
         mutableStateOf("")
     }
-    var bmiState = rememberSaveable {
+    var bmiState by rememberSaveable {
         mutableStateOf("0.0")
     }
+    var bmiClassificationState by rememberSaveable() {
+        mutableStateOf("")
+    }
+    val context = LocalContext.current.applicationContext
 
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -105,10 +109,10 @@ fun CalculatorScreen() {
                     fontSize = 18.sp
                 )
                 OutlinedTextField(
-                    value = weightState.value,
+                    value = weightState,
                     onValueChange = {
                         Log.i("ds2m", it)
-                        weightState.value = it
+                        weightState = it
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -123,9 +127,9 @@ fun CalculatorScreen() {
                     fontSize = 18.sp
                 )
                 OutlinedTextField(
-                    value = heightState.value,
+                    value = heightState,
                     onValueChange = {
-                        heightState.value = it
+                        heightState = it
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -136,10 +140,13 @@ fun CalculatorScreen() {
                 )
                 Spacer(modifier = Modifier.height(48.dp))
                 Button(
+
                     onClick = {
-                              bmiState.value = calculate(
-                                  weight = weightState.value.toDouble(),
-                                  height = heightState.value.toDouble()).toString()
+                        var w = weightState.toDouble()
+                        var h = heightState.toDouble()
+                        var bmi = calculate(weight = w, height = h)
+                        bmiState = String.format("%.2f", bmi)
+                        bmiClassificationState = getBmiClasification(bmi,context)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -179,18 +186,23 @@ fun CalculatorScreen() {
                         )
 
                         Text(
-                            text = bmiState.value,
+                            text = bmiState,
                             color = Color.White,
                             fontSize = 30.sp
                         )
                         Text(
-                            text = stringResource(id = R.string.ideal_state),
+                            text = bmiClassificationState,
                             color = Color.White,
                             fontSize = 19.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Row() {
-                            Button(onClick = { /*TODO*/ }) {
+                            Button(onClick = {
+                                weightState = " "
+                                heightState = " "
+                                bmiClassificationState = " "
+                                bmiState = "0.0 "
+                            }) {
                                 Text(text = stringResource(id = R.string.reset))
                             }
                             Spacer(modifier = Modifier.width(32.dp))
